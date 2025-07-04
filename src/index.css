@@ -2,6 +2,21 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  --color-primary: #caeb66;
+  --color-secondary: teal;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  default: true;
+  --color-primary: #caeb66;
+  --color-secondary: teal;
+}
+
+
 body {
     font-family: "Urbanist", sans-serif;
 }
