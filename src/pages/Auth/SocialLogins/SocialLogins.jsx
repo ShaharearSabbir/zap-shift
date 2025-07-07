@@ -1,15 +1,28 @@
 import React from "react";
 import useAuth from "../../../hooks/useAuth";
 import { useLocation, useNavigate } from "react-router";
+import useAxios from "../../../hooks/useAxios";
 
 const SocialLogins = () => {
   const { googleLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const Axios = useAxios();
 
   const handleGoogleLogin = () => {
     googleLogin()
-      .then(() => {
+      .then((currentUser) => {
+        const userInfo = {
+          email: currentUser.user.email,
+          role: "user",
+          createdAt: new Date().toISOString(),
+          uid: currentUser.user.uid,
+        };
+        Axios.post("/users", userInfo).then((res) => {
+          if (res.data.insertedId) {
+            console.log("account created successfully");
+          }
+        });
         navigate(location.state || "/");
       })
       .catch((err) => console.log(err.message));

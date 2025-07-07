@@ -9,6 +9,11 @@ import PrivateRoute from "../routes/ProvateRoute/ProvateRoute";
 import SendParcel from "../pages/sendParcel/SendParcel";
 import DashboardLayout from "../layouts/DashboardLayout";
 import MyParcels from "../pages/Dashboard/MyParcels/MyParcels";
+import Payment from "../pages/Dashboard/Payment/Payment";
+import PaymentHistory from "../pages/Dashboard/PaymentHistory/PaymentHistory";
+import BeARider from "../pages/Auth/BeARider/BeARider";
+import PendingRider from "../pages/Dashboard/PendingRider/PendingRider";
+import ApprovedRider from "../pages/Dashboard/ApprovedRider/ApprovedRider";
 
 export const router = createBrowserRouter([
   {
@@ -16,6 +21,14 @@ export const router = createBrowserRouter([
     Component: RootLayout,
     children: [
       { index: true, Component: Home },
+      {
+        path: "beARider",
+        element: (
+          <PrivateRoute>
+            <BeARider />
+          </PrivateRoute>
+        ),
+      },
       {
         path: "coverage",
         loader: () => fetch("/warehouses.json").then((res) => res.json()),
@@ -47,7 +60,11 @@ export const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      {path: "myParcels", Component: MyParcels}
+      { path: "myParcels", Component: MyParcels },
+      { path: "pendingRiders", Component: PendingRider },
+      { path: "approvedRiders", Component: ApprovedRider },
+      { path: "payment/:parcelId", Component: Payment },
+      { path: "paymentHistory", Component: PaymentHistory },
     ],
   },
 ]);

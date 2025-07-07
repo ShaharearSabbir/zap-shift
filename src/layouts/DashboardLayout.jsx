@@ -1,6 +1,18 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router";
 import ProFastLogo from "../pages/Shared/ProFastLogo/ProFastLogo";
+import {
+  FaHome,
+  FaBox,
+  FaPlusCircle,
+  FaHistory,
+  FaUser, // For User Profile
+  FaTruck, // For Track Parcel
+  FaBell, // For Notifications
+  FaQuestionCircle, // For Support/Help
+  FaHourglassHalf, // New: For Pending Rider
+  FaCheckCircle,
+} from "react-icons/fa"; // Importing icons
 
 const DashboardLayout = () => {
   return (
@@ -46,11 +58,67 @@ const DashboardLayout = () => {
           <ProFastLogo />
           {/* Sidebar content here */}
           <li>
-            <a>Home</a>
+            <NavLink to="/">
+              <FaHome className="text-xl" />
+              Home
+            </NavLink>
           </li>
           <li>
-            <NavLink to="/dashboard/myParcels">My Parcel</NavLink>
+            <NavLink to="/dashboard/sendParcel">
+              <FaPlusCircle className="text-xl" />
+              Add Parcel
+            </NavLink>
           </li>
+          <li>
+            <NavLink to="/dashboard/myParcels">
+              <FaBox className="text-xl" />
+              My Parcel
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/dashboard/trackParcel">
+              <FaTruck className="text-xl" />
+              Track Parcel
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/dashboard/paymentHistory">
+              <FaHistory className="text-xl" />
+              Payment History
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/dashboard/profile">
+              <FaUser className="text-xl" />
+              Profile
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/dashboard/notifications">
+              <FaBell className="text-xl" />
+              Notifications
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/dashboard/support">
+              <FaQuestionCircle className="text-xl" />
+              Support
+            </NavLink>
+          </li>
+          {/* Rider Management Links (grouped at the end) */}
+          <li>
+            <NavLink to="/dashboard/pendingRiders">
+              <FaHourglassHalf className="text-xl" />
+              Pending Rider
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/dashboard/approvedRiders">
+              <FaCheckCircle className="text-xl" />
+              Approved Rider
+            </NavLink>
+          </li>
+          {/* Add more dashboard links as needed */}
         </ul>
       </div>
     </div>

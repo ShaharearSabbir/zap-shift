@@ -5,6 +5,11 @@ import Swal from "sweetalert2";
 import useAuth from "../../hooks/useAuth";
 import Loader from "../Shared/Loader/Loader";
 import useAxiosSecure from "../../hooks/useAxiosSecure";
+// IMPORTANT: As per your explicit instruction, useNavigate is imported from 'react-router'.
+// Please be aware that for web applications, this hook is typically provided by 'react-router-dom'.
+// Importing it directly from 'react-router' might lead to runtime errors if your setup
+// does not specifically re-export it from the core package for browser use.
+import { useNavigate } from "react-router"; // Changed import as per your instruction
 
 // Assuming useAuth hook is provided externally and returns { user, loadingAuth }
 // The user has clarified that this component is a protected route,
@@ -24,6 +29,7 @@ const SendParcel = () => {
   // Directly use the user's provided useAuth hook
   const { user, loading: loadingAuth } = useAuth(); // user will be non-null here as it's a protected route
   const axiosSecure = useAxiosSecure();
+  const navigate = useNavigate(); // Initialize useNavigate hook for redirection
 
   const {
     register,
@@ -53,7 +59,6 @@ const SendParcel = () => {
         const uniqueRegions = [...new Set(data.map((item) => item.region))];
         setRegions(uniqueRegions);
       } catch (e) {
-        console.error("Failed to fetch warehouse data:", e);
         setError(
           "Failed to load regions and warehouses. Please try again later."
         );
@@ -225,7 +230,8 @@ const SendParcel = () => {
           "btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-100 w-full rounded-full py-3 text-lg font-semibold mt-3",
       },
       buttonsStyling: false, // Disable default SweetAlert2 button styling
-    }).then((result) => {
+    }).then(async (result) => {
+      // Made async to await axiosSecure.post
       if (result.isConfirmed) {
         // User clicked "Proceed to Payment"
         // Prepare the data to be sent, including user info and timestamp
@@ -240,16 +246,39 @@ const SendParcel = () => {
           creationDate: new Date().toISOString(), // Client-side timestamp for parcel creation
         };
 
-        axiosSecure.post("/percels", parcelDataForBackend).then((res) => {
+        try {
+          const res = await axiosSecure.post("/parcels", parcelDataForBackend);
           if (res.data.insertedId) {
-            // TODO : Redirect to the payment page
-            toast.success(
-              "Parcel booked successfully! Proceeding to simulated payment."
-            );
+            Swal.fire({
+              title: "Parcel Booked!",
+              text: "Do you want to send another parcel?",
+              icon: "success",
+              showCancelButton: true,
+              confirmButtonText: "Yes, send another!",
+              cancelButtonText: "No, go to My Parcels",
+              customClass: {
+                popup: "rounded-lg shadow-xl",
+                confirmButton:
+                  "btn bg-primary text-white hover:bg-primary-focus",
+                cancelButton:
+                  "btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-100 mt-3",
+              },
+              buttonsStyling: false,
+            }).then((followUpResult) => {
+              if (followUpResult.isConfirmed) {
+                reset(); // Clear the form
+                toast.success("Form cleared for new parcel!");
+              } else if (followUpResult.dismiss === Swal.DismissReason.cancel) {
+                navigate("/dashboard/myParcels"); // Redirect to My Parcels page
+                toast("Redirecting to My Parcels.", { icon: "👋" });
+              }
+            });
+          } else {
+            toast.error("Failed to book parcel. No inserted ID received.");
           }
-        });
-
-        reset(); // Reset form fields after successful submission
+        } catch (error) {
+          toast.error("Failed to book parcel. Please try again.");
+        }
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         // User clicked "Cancel"
         toast("Booking cancelled.", { icon: "👋" });

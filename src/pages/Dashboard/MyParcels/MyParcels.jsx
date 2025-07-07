@@ -10,17 +10,18 @@ import {
 import Loader from "../../Shared/Loader/Loader";
 import Swal from "sweetalert2"; // Import SweetAlert2
 import toast from "react-hot-toast"; // Assuming react-hot-toast is available
+// IMPORTANT: For web applications, useNavigate is typically imported from 'react-router-dom'.
+// Importing from 'react-router' directly might lead to runtime errors as it's the core package
+// and 'react-router-dom' provides the web-specific bindings.
+import { useNavigate } from "react-router"; // Changed import as per your instruction
 
 const MyParcels = () => {
   const { user } = useAuth();
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient(); // Initialize useQueryClient
+  const navigate = useNavigate(); // Initialize useNavigate
 
-  const {
-    data: parcels = [],
-    isPending,
-    refetch,
-  } = useQuery({
+  const { data: parcels = [], isPending } = useQuery({
     queryKey: ["myParcels", user.uid],
     queryFn: async () => {
       const res = await axiosSecure.get(`/parcels?userId=${user.uid}`);
@@ -141,27 +142,43 @@ const MyParcels = () => {
   };
 
   const handlePayParcel = (parcel) => {
-    // New handler for Pay button
     console.log("Pay Parcel:", parcel.trackingId, parcel);
-    // In a real app, you would navigate to a payment gateway or open a payment modal
-    const messageBox = document.createElement("div");
-    messageBox.className =
-      "fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50";
-    messageBox.innerHTML = `
-      <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
-        <h3 class="text-lg font-bold mb-4">Proceed to Payment</h3>
-        <p class="mb-2">You are about to pay for parcel: ${
-          parcel.parcelName
-        }</p>
-        <p class="mb-4">Tracking ID: ${
-          parcel.trackingId
-        }<br/>Cost: ৳${parcel.deliveryCost.toFixed(2)}</p>
-        <button id="closeMessageBox" class="btn btn-primary mt-4">Close</button>
-      </div>
-    `;
-    document.body.appendChild(messageBox);
-    document.getElementById("closeMessageBox").onclick = () =>
-      document.body.removeChild(messageBox);
+
+    Swal.fire({
+      title: "Proceed to Payment",
+      html: `
+        <div class="text-base-content text-left space-y-2 text-lg">
+          <p class="mb-2">You are about to pay for parcel: <span class="font-semibold">${
+            parcel.parcelName
+          }</span></p>
+          <p class="mb-4">Tracking ID: <span class="font-semibold">${
+            parcel.trackingId
+          }</span><br/>Cost: <span class="font-semibold">৳${parcel.deliveryCost.toFixed(
+        2
+      )}</span></p>
+        </div>
+      `,
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "💳 Pay Now",
+      cancelButtonText: "Close",
+      customClass: {
+        popup: "rounded-lg shadow-xl",
+        // Modified button classes for centering and new lines
+        confirmButton:
+          "btn bg-primary text-white hover:bg-primary-focus rounded-full py-3 text-lg font-semibold shadow-md transition duration-200 ease-in-out w-full mb-3", // Added w-full, mb-3
+        cancelButton:
+          "btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-100 rounded-full py-3 text-lg font-semibold w-full", // Added w-full
+        actions: "flex flex-col items-center w-full", // Added flex-col to stack buttons and items-center to center them
+      },
+      buttonsStyling: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // User clicked "Pay Now"
+        navigate(`/dashboard/payment/${parcel._id}`); // Navigate to payment page using parcel._id
+      }
+      // If cancelled, SweetAlert2 automatically closes, no need for explicit closeMessageBox
+    });
   };
 
   const handleCancelParcel = async (parcel) => {
@@ -189,14 +206,17 @@ const MyParcels = () => {
         try {
           // Assuming your backend delete endpoint is /parcels/:id
           const res = await axiosSecure.delete(`/parcels/${parcel._id}`);
-          console.log(res.data);
+          console.log("Backend delete response:", res.data); // Log the response for debugging
+
           if (res.data.deletedCount > 0) {
             // Check for successful deletion count
             toast.success("Parcel cancelled successfully!");
             // Invalidate the query to refetch the parcels data and update the UI
-            refetch();
+            queryClient.invalidateQueries(["myParcels", user.uid]);
           } else {
-            toast.error("Failed to cancel parcel. Please try again.");
+            toast.error(
+              "Failed to cancel parcel. No deletion recorded by backend."
+            );
           }
         } catch (error) {
           console.error("Error cancelling parcel:", error);
